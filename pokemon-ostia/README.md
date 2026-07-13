@@ -42,3 +42,10 @@ Débogage : ajouter `?dev=1` à l'URL (FPS, draw calls, hooks de test `window.__
 
 Rendu : Three.js 0.160 (vendorisé dans `assets/vendor/`).
 Assets audio et images de couverture générés avec Higgsfield.
+
+## Déploiement
+
+- URL de jeu : https://humble-parade-590.higgsfield.gg/
+- `game_id` Higgsfield (à repasser à `deploy_game` pour mettre à jour sans changer d'URL) :
+  `7e561a83-3b5a-4e1f-8175-88bec46470a4`
+- Zip de déploiement : `dist/ostia-monsters.zip` (layout plateforme : `logic.js` + `index.html` à la racine)
