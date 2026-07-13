@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Ostia Monsters</title>
+<style>
+  :root {
+    --coral: #e8654f; --coral-d: #c44a38; --teal: #3fa8a0; --teal-d: #2f7e7a;
+    --sand: #e8c28a; --sand-l: #f0d9ae; --amber: #ffb13d; --dark: #2b2422;
+    --panel: rgba(43, 36, 34, 0.88);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #9fd9ec;
+    font-family: "Avenir Next", "Trebuchet MS", system-ui, sans-serif; }
+  canvas { display: block; }
+  #dev { position: fixed; top: 4px; left: 4px; color: #0f0; font: 12px monospace; display: none; z-index: 99; white-space: pre; }
+  .overlay { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; z-index: 10; pointer-events: none; }
+  .overlay > * { pointer-events: auto; }
+  .hidden { display: none !important; }
+
+  /* ---------- Title menu ---------- */
+  #ui-menu { justify-content: flex-start; padding-top: 8vh;
+    background: radial-gradient(ellipse at 50% 120%, rgba(43,36,34,0.35), transparent 60%); }
+  #title { font-size: clamp(2.4rem, 9vw, 5.2rem); margin: 0; letter-spacing: 0.04em; display: flex; }
+  #title span { display: inline-block; color: var(--amber); -webkit-text-stroke: 2px var(--coral-d);
+    text-shadow: 0 4px 0 var(--coral-d), 0 8px 18px rgba(0,0,0,0.35);
+    animation: drop 0.7s cubic-bezier(.2,1.6,.4,1) both; }
+  #title span.sp { width: 0.4em; }
+  @keyframes drop { from { transform: translateY(-120px) rotate(-8deg); opacity: 0; }
+    to { transform: translateY(0) rotate(0); opacity: 1; } }
+  #title span:hover { animation: bop 0.45s ease; }
+  @keyframes bop { 30% { transform: translateY(-14px) scale(1.15); } }
+  #subtitle { color: #fff; font-weight: 600; margin: 10px 0 0; font-size: clamp(1rem, 3vw, 1.4rem);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.4); animation: floaty 3s ease-in-out infinite, fadein 1.2s 0.5s both; }
+  @keyframes floaty { 50% { transform: translateY(-6px); } }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+  .menu-btns { margin-top: auto; margin-bottom: 9vh; display: flex; flex-direction: column; gap: 14px; width: min(320px, 78vw); }
+  .mbtn { font: inherit; font-weight: 800; font-size: 1.25rem; letter-spacing: 0.06em; color: #fff;
+    padding: 15px 20px; border: 0; border-radius: 16px; cursor: pointer; position: relative;
+    background: linear-gradient(180deg, var(--coral), var(--coral-d));
+    box-shadow: 0 6px 0 var(--coral-d), 0 10px 24px rgba(0,0,0,0.3);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s;
+    animation: rise 0.6s cubic-bezier(.2,1.4,.4,1) both; }
+  .mbtn.alt { background: linear-gradient(180deg, var(--teal), var(--teal-d)); box-shadow: 0 6px 0 var(--teal-d), 0 10px 24px rgba(0,0,0,0.3); }
+  .mbtn:nth-child(1) { animation-delay: 0.55s; } .mbtn:nth-child(2) { animation-delay: 0.7s; } .mbtn:nth-child(3) { animation-delay: 0.85s; }
+  @keyframes rise { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .mbtn:hover, .mbtn:focus-visible { transform: translateY(-3px) scale(1.045); filter: brightness(1.08); outline: none; }
+  .mbtn:active { transform: translateY(2px) scale(0.98); box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
+  .mbtn:focus-visible { box-shadow: 0 6px 0 var(--coral-d), 0 0 0 4px rgba(255,255,255,0.7); }
+  #menu-note { color: rgba(255,255,255,0.85); font-size: 0.72rem; margin-bottom: 12px; text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    animation: fadein 1.2s 1.2s both; }
+  #btn-play { animation: rise 0.6s 0.55s cubic-bezier(.2,1.4,.4,1) both, pulse 2.2s 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { filter: brightness(1.12); } }
+
+  /* ---------- Panels (options / pause / confirm / victory) ---------- */
+  .panel { background: var(--panel); border-radius: 20px; padding: 22px 26px; color: #fff;
+    width: min(420px, 92vw); max-height: 88vh; overflow-y: auto; backdrop-filter: blur(6px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45); animation: pop 0.28s cubic-bezier(.2,1.4,.4,1) both; }
+  @keyframes pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .panel h2 { margin: 0 0 18px; text-align: center; color: var(--amber); letter-spacing: 0.08em; }
+  .opt-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 14px 0; }
+  .opt-row label { font-weight: 700; }
+  input[type=range] { flex: 1; max-width: 180px; accent-color: var(--coral); height: 22px; cursor: pointer; }
+  .seg { display: flex; gap: 6px; }
+  .seg button { font: inherit; font-weight: 700; color: #fff; background: rgba(255,255,255,0.12);
+    border: 2px solid transparent; border-radius: 10px; padding: 7px 13px; cursor: pointer; transition: all 0.15s; }
+  .seg button:hover, .seg button:focus-visible { background: rgba(255,255,255,0.22); outline: none; }
+  .seg button.on { background: var(--coral); border-color: #fff3; }
+  .pbtn { font: inherit; font-weight: 800; font-size: 1.05rem; color: #fff; width: 100%; margin-top: 12px;
+    padding: 12px; border: 0; border-radius: 14px; cursor: pointer;
+    background: linear-gradient(180deg, var(--teal), var(--teal-d)); box-shadow: 0 4px 0 var(--teal-d);
+    transition: transform 0.12s, filter 0.12s; }
+  .pbtn.warn { background: linear-gradient(180deg, var(--coral), var(--coral-d)); box-shadow: 0 4px 0 var(--coral-d); }
+  .pbtn:hover, .pbtn:focus-visible { transform: translateY(-2px) scale(1.02); filter: brightness(1.1); outline: none; }
+  .pbtn:active { transform: translateY(1px); }
+  #confirm-text { text-align: center; line-height: 1.5; }
+
+  /* ---------- HUD ---------- */
+  #ui-hud { justify-content: flex-start; align-items: stretch; }
+  #party { position: absolute; top: 10px; left: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .chip { background: var(--panel); color: #fff; border-radius: 12px; padding: 6px 10px; min-width: 150px;
+    font-size: 0.78rem; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+  .chip .hpline { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.18); margin-top: 4px; overflow: hidden; }
+  .chip .hpfill { height: 100%; border-radius: 3px; background: #7fa653; transition: width 0.3s; }
+  #inv { position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; }
+  .inv-chip { background: var(--panel); color: var(--sand-l); border-radius: 12px; padding: 8px 12px;
+    font-size: 0.82rem; font-weight: 800; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+  #btn-pause { position: absolute; top: 58px; right: 10px; width: 44px; height: 44px; border-radius: 12px; border: 0;
+    background: var(--panel); color: #fff; font-size: 1.3rem; cursor: pointer; }
+  #location-banner { position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(180deg, var(--amber), #e09a28); color: var(--dark); font-weight: 900;
+    letter-spacing: 0.08em; padding: 10px 26px; border-radius: 999px; box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    opacity: 0; transition: opacity 0.5s, transform 0.5s; white-space: nowrap; }
+  #location-banner.show { opacity: 1; transform: translateX(-50%) translateY(4px); }
+  #interact-hint { position: absolute; bottom: 130px; left: 50%; transform: translateX(-50%);
+    background: var(--panel); color: #fff; padding: 8px 16px; border-radius: 999px; font-weight: 700;
+    font-size: 0.85rem; opacity: 0; transition: opacity 0.25s; animation: floaty 1.6s ease-in-out infinite; }
+  #interact-hint.show { opacity: 1; }
+  #toast { position: absolute; bottom: 200px; left: 50%; transform: translateX(-50%); background: var(--panel);
+    color: var(--sand-l); padding: 8px 18px; border-radius: 999px; font-weight: 700; opacity: 0; transition: opacity 0.4s; }
+  #toast.show { opacity: 1; }
+
+  /* ---------- Dialog ---------- */
+  #ui-dialog { justify-content: flex-end; padding-bottom: 20px; }
+  #dlg-box { background: var(--panel); border: 3px solid var(--sand); border-radius: 18px; color: #fff;
+    width: min(640px, 94vw); padding: 14px 18px 16px; cursor: pointer;
+    animation: pop 0.22s cubic-bezier(.2,1.4,.4,1) both; }
+  #dlg-name { color: var(--amber); font-weight: 900; font-size: 0.85rem; letter-spacing: 0.06em; margin-bottom: 4px; }
+  #dlg-text { line-height: 1.45; min-height: 44px; font-weight: 600; }
+  #dlg-next { text-align: right; color: var(--sand); animation: floaty 1s ease-in-out infinite; font-size: 0.9rem; }
+
+  /* ---------- Battle UI ---------- */
+  #ui-battle { justify-content: flex-end; padding-bottom: 12px; display: none; }
+  #ui-battle.show { display: flex; }
+  .bbar { position: absolute; background: var(--panel); border-radius: 14px; padding: 10px 14px; color: #fff;
+    min-width: 200px; box-shadow: 0 6px 18px rgba(0,0,0,0.3); animation: pop 0.3s both; }
+  .bbar .brow { display: flex; justify-content: space-between; gap: 12px; font-weight: 800; font-size: 0.9rem; }
+  .bbar .bline { height: 9px; background: rgba(255,255,255,0.15); border-radius: 5px; margin-top: 6px; overflow: hidden; }
+  .bbar .bfill { height: 100%; border-radius: 5px; background: #7fa653; transition: width 0.35s; }
+  .bbar .bhp { font-size: 0.75rem; color: var(--sand-l); text-align: right; margin-top: 3px; }
+  #enemy-bar { top: 14px; right: 14px; }
+  #ally-bar { top: 14px; left: 14px; }
+  #battle-msg { background: var(--panel); border: 3px solid var(--sand); border-radius: 16px; color: #fff;
+    width: min(620px, 94vw); padding: 12px 16px; font-weight: 700; min-height: 46px; line-height: 1.4; }
+  #battle-actions { display: none; grid-template-columns: 1fr 1fr; gap: 8px; width: min(620px, 94vw); margin-top: 8px; }
+  #battle-actions.open { display: grid; }
+  .bbtn { --tc: var(--teal); font: inherit; font-weight: 800; font-size: 1rem; color: #fff; padding: 12px 10px;
+    border: 0; border-left: 6px solid var(--tc); border-radius: 12px; cursor: pointer;
+    background: var(--panel); transition: transform 0.1s, background 0.1s; text-align: left;
+    display: flex; flex-direction: column; gap: 2px; }
+  .bbtn.primary { background: linear-gradient(180deg, var(--coral), var(--coral-d)); border-left-color: var(--amber); }
+  .bbtn:hover, .bbtn:focus-visible { transform: scale(1.03); background: rgba(90,75,70,0.95); outline: 2px solid var(--amber); }
+  .bbtn.primary:hover, .bbtn.primary:focus-visible { background: linear-gradient(180deg, var(--coral), var(--coral-d)); }
+  .bsub { font-size: 0.72rem; font-weight: 700; color: var(--sand-l); }
+
+  /* ---------- Victory ---------- */
+  #ui-victory { background: radial-gradient(ellipse at center, rgba(255,177,61,0.25), rgba(43,36,34,0.75)); }
+  #victory-panel h2 { font-size: 1.8rem; }
+  #victory-panel p { text-align: center; line-height: 1.5; }
+  .confetti { position: absolute; top: -20px; width: 10px; height: 16px; border-radius: 3px; animation: fall linear infinite; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+
+  /* ---------- Touch controls ---------- */
+  #ui-touch { display: none; }
+  body.touch #ui-touch { display: block; }
+  #joy { position: fixed; bottom: 26px; left: 26px; width: 120px; height: 120px; border-radius: 50%;
+    background: rgba(43,36,34,0.35); border: 2px solid rgba(255,255,255,0.4); z-index: 12; touch-action: none; }
+  #joy-stick { position: absolute; left: 38px; top: 38px; width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.75); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+  #btn-act { position: fixed; bottom: 40px; right: 30px; width: 84px; height: 84px; border-radius: 50%; border: 0;
+    background: linear-gradient(180deg, var(--coral), var(--coral-d)); color: #fff; font-size: 1.6rem; font-weight: 900;
+    box-shadow: 0 6px 0 var(--coral-d), 0 10px 24px rgba(0,0,0,0.35); z-index: 12; touch-action: none; }
+  #btn-act:active { transform: translateY(3px); }
+
+  /* ---------- Transition ---------- */
+  #fade { position: fixed; inset: 0; background: var(--dark); z-index: 50; pointer-events: none;
+    clip-path: circle(0% at 50% 50%); transition: clip-path 0.55s ease-in; }
+  #fade.in { clip-path: circle(75% at 50% 50%); pointer-events: auto; }
+  #loading { position: fixed; inset: 0; background: #2b2422; color: var(--amber); display: flex;
+    align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; letter-spacing: 0.1em; z-index: 100; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="dev"></div>
+<div id="loading">···</div>
+<div id="fade"></div>
+
+<div id="ui-menu" class="overlay">
+  <h1 id="title" aria-live="polite"></h1>
+  <p id="subtitle"></p>
+  <div class="menu-btns">
+    <button id="btn-continue" class="mbtn alt focusable hidden"></button>
+    <button id="btn-play" class="mbtn focusable"></button>
+    <button id="btn-options" class="mbtn alt focusable"></button>
+  </div>
+  <div id="menu-note"></div>
+</div>
+
+<div id="ui-options" class="overlay hidden">
+  <div class="panel">
+    <h2 data-str="options"></h2>
+    <div class="opt-row"><label data-str="optMusic"></label>
+      <input id="opt-music" class="focusable" type="range" min="0" max="1" step="0.05"></div>
+    <div class="opt-row"><label data-str="optSfx"></label>
+      <input id="opt-sfx" class="focusable" type="range" min="0" max="1" step="0.05"></div>
+    <div class="opt-row"><label data-str="optLang"></label>
+      <div class="seg" id="opt-lang">
+        <button class="focusable" data-v="fr">Français</button>
+        <button class="focusable" data-v="en">English</button></div></div>
+    <div class="opt-row"><label data-str="optQuality"></label>
+      <div class="seg" id="opt-quality">
+        <button class="focusable" data-v="high" data-str="optQualityHigh"></button>
+        <button class="focusable" data-v="low" data-str="optQualityLow"></button></div></div>
+    <div class="opt-row"><label data-str="optFx"></label>
+      <div class="seg" id="opt-fx">
+        <button class="focusable" data-v="on" data-str="optOn"></button>
+        <button class="focusable" data-v="off" data-str="optOff"></button></div></div>
+    <button id="btn-opt-back" class="pbtn focusable" data-str="back"></button>
+  </div>
+</div>
+
+<div id="ui-pause" class="overlay hidden">
+  <div class="panel">
+    <h2 data-str="pause"></h2>
+    <button id="btn-resume" class="pbtn focusable" data-str="resume"></button>
+    <button id="btn-pause-options" class="pbtn focusable" data-str="options"></button>
+    <button id="btn-quit" class="pbtn warn focusable" data-str="quitToMenu"></button>
+  </div>
+</div>
+
+<div id="ui-confirm" class="overlay hidden">
+  <div class="panel">
+    <p id="confirm-text"></p>
+    <div id="confirm-btns"></div>
+  </div>
+</div>
+
+<div id="ui-hud" class="overlay hidden">
+  <div id="party"></div>
+  <div id="inv"></div>
+  <button id="btn-pause">⚙</button>
+  <div id="location-banner"></div>
+  <div id="interact-hint"></div>
+  <div id="toast"></div>
+</div>
+
+<div id="ui-dialog" class="overlay hidden">
+  <div id="dlg-box">
+    <div id="dlg-name"></div>
+    <div id="dlg-text"></div>
+    <div id="dlg-next">▼</div>
+  </div>
+</div>
+
+<div id="ui-battle" class="overlay">
+  <div id="enemy-bar" class="bbar">
+    <div class="brow"><span class="bname"></span><span class="blvl"></span></div>
+    <div class="bline"><div class="bfill"></div></div><div class="bhp"></div>
+  </div>
+  <div id="ally-bar" class="bbar">
+    <div class="brow"><span class="bname"></span><span class="blvl"></span></div>
+    <div class="bline"><div class="bfill"></div></div><div class="bhp"></div>
+  </div>
+  <div id="battle-msg"></div>
+  <div id="battle-actions"></div>
+</div>
+
+<div id="ui-victory" class="overlay hidden">
+  <div class="panel" id="victory-panel">
+    <h2 id="victory-title"></h2>
+    <p id="victory-body"></p>
+    <p id="victory-dex"></p>
+    <button id="btn-victory-continue" class="pbtn focusable"></button>
+  </div>
+</div>
+
+<div id="ui-touch">
+  <div id="joy"><div id="joy-stick"></div></div>
+  <button id="btn-act">A</button>
+</div>
+
+<script type="module" src="./main.js"></script>
+</body>
+</html>

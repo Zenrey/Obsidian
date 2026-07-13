@@ -1,0 +1,23 @@
+id,role,type,description,size/ratio,style line ref,source
+card_thumbnail,deploy thumbnail + marketplace cover,image,low-poly island diorama of Ostia region with kangaroo fire creature and title OSTIA MONSTERS,16:9 1k,FORMULA,generate
+card_favicon,deploy favicon + catalog icon,image,low-poly kangaroo fire creature head emblem,1:1 1k,FORMULA,generate
+music_overworld,menu + overworld background loop,audio/music,warm adventurous instrumental outback theme calm acoustic,40s loop,FORMULA mood block 4,generate
+music_battle,battle scene background loop,audio/music,energetic playful percussion battle theme,30s loop,FORMULA mood block 4,generate
+sfx_click,UI button click,audio/sfx,soft wooden menu click,1s,-,generate
+sfx_hit,attack impact in battle,audio/sfx,punchy cartoon impact thump,1s,-,generate
+sfx_throw,capture orb throw,audio/sfx,quick whoosh swish,1s,-,generate
+sfx_capture,successful capture chime,audio/sfx,bright magical success chime,2s,-,generate
+sfx_victory,battle victory fanfare,audio/sfx,short triumphant fanfare,3s,-,generate
+mdl_hero,playable trainer character overworld,3d/procedural,low-poly ranger with hat coral shirt,1.0 hero-units,FORMULA geometry clause,code
+mdl_kangarouge,fire starter creature,3d/procedural,low-poly coral-red kangaroo with ember tail,0.9,FORMULA geometry clause,code
+mdl_dingoflam,fire wild creature,3d/procedural,low-poly orange dingo with flame mane,0.8,FORMULA geometry clause,code
+mdl_koalys,plant starter creature,3d/procedural,low-poly green koala with leaf ears,0.7,FORMULA geometry clause,code
+mdl_eucalypin,plant wild creature,3d/procedural,low-poly walking eucalyptus sapling,1.1,FORMULA geometry clause,code
+mdl_ornithos,water starter creature,3d/procedural,low-poly teal platypus,0.6,FORMULA geometry clause,code
+mdl_crocobleu,water wild creature,3d/procedural,low-poly blue crocodile,1.2,FORMULA geometry clause,code
+mdl_orb,capture orb item,3d/procedural,low-poly amber-white capture orb,0.2,FORMULA geometry clause,code
+env_terrain,overworld region mesh Sydnera-Melbora-Canberry,3d/procedural,faceted ochre-green terrain turquoise coast,region,FORMULA blocks 3-4,code
+env_trees,eucalyptus trees + bushes,3d/procedural,low-poly eucalyptus canopies instanced,2.0,FORMULA geometry clause,code
+env_houses,town buildings Sydnera Melbora Canberry,3d/procedural,low-poly sand-tone houses with prism roofs,2.5,FORMULA geometry clause,code
+env_grass,tall grass encounter patches,3d/procedural,instanced green grass tufts,0.5,FORMULA geometry clause,code
+vendor_three,3D renderer library,js/vendored,Three.js pinned module build,-,-,vendor
