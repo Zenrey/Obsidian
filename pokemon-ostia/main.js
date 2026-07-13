@@ -2,7 +2,7 @@
 import * as THREE from "./assets/vendor/three.module.js";
 import { STR } from "./strings.js";
 import { SPECIES, BAL, WILD, TRAINERS, makeMon } from "./data.js";
-import { buildHero } from "./models.js";
+import { buildHero, preloadGlb } from "./models.js";
 import { buildWorld, buildMenuDiorama, heightAt, inGrassZone, routeAt, TOWNS } from "./world.js";
 import { Battle } from "./battle.js";
 import { AudioMan } from "./audio.js";
@@ -74,7 +74,7 @@ menuScene.add(menuSun);
 const menuCam = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
 menuCam.position.set(0, 6.5, 14.5);
 menuCam.lookAt(0, 0.5, 0);
-const diorama = buildMenuDiorama(menuScene);
+let diorama = null; // built at boot, after the Higgsfield GLB meshes have loaded
 
 const worldScene = new THREE.Scene();
 worldScene.background = new THREE.Color(0x9fd9ec);
@@ -574,17 +574,24 @@ function updateWorld(dt) {
     else if (world.canWalk(nx, hero.position.z)) hero.position.x = nx;
     else if (world.canWalk(hero.position.x, nz)) hero.position.z = nz;
     hero.rotation.y = Math.atan2(vx, vz);
-    // walk cycle
+    // walk cycle (procedural hero has limbs; a generated GLB hero hops instead)
     hero.userData.phase = (hero.userData.phase || 0) + dt * 11;
     const ph = Math.sin(hero.userData.phase) * 0.65;
     const L = hero.userData.limbs;
-    L.legL.rotation.x = ph; L.legR.rotation.x = -ph;
-    L.armL.rotation.x = -ph * 0.8; L.armR.rotation.x = ph * 0.8;
+    if (L) {
+      L.legL.rotation.x = ph; L.legR.rotation.x = -ph;
+      L.armL.rotation.x = -ph * 0.8; L.armR.rotation.x = ph * 0.8;
+    } else {
+      hero.rotation.z = Math.sin(hero.userData.phase * 0.5) * 0.06;
+    }
   } else {
     const L = hero.userData.limbs;
-    for (const k of ["legL", "legR", "armL", "armR"]) L[k].rotation.x *= 0.8;
+    if (L) for (const k of ["legL", "legR", "armL", "armR"]) L[k].rotation.x *= 0.8;
+    else hero.rotation.z *= 0.85;
   }
-  hero.position.y = Math.max(-0.1, heightAt(hero.position.x, hero.position.z));
+  const walkBounce = hero.userData.limbs ? 0 :
+    (len > 0.15 && state === "world" ? Math.abs(Math.sin((hero.userData.phase || 0) * 0.5)) * 0.1 : 0);
+  hero.position.y = Math.max(-0.1, heightAt(hero.position.x, hero.position.z)) + walkBounce;
 
   // encounters
   encounterGrace = Math.max(0, encounterGrace - dt);
@@ -651,7 +658,7 @@ function frame(now) {
   last = now;
   while (acc >= STEP) {
     clock += STEP;
-    if (state === "menu" || $("ui-options") && state === "menu") diorama.animate(clock);
+    if (diorama && state === "menu") diorama.animate(clock);
     if (state === "menu") pollPad();
     if (world && (state === "world" || state === "dialog" || state === "pause" || state === "victory")) {
       if (state === "world" || state === "dialog") updateWorld(state === "world" ? STEP : 0.0001);
@@ -671,8 +678,24 @@ function frame(now) {
 }
 
 // ---------- Boot ----------
+// Creature/hero meshes generated with Higgsfield (sam_3_3d), served from its media CDN.
+// Heights match the procedural fallbacks so every call site keeps its proportions.
+const GLB_BASE = "https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/";
+const GLB_ASSETS = [
+  { id: "hero", url: GLB_BASE + "c48df27f-8cdb-4b5d-8e56-8fa6611291f5.glb", height: 1.7 },
+  { id: "kangarouge", url: GLB_BASE + "f08827ae-33bf-4580-aa31-258cf1ea0d2f.glb", height: 1.7 },
+  { id: "dingoflam", url: GLB_BASE + "2b4cfd1b-52c9-4dfc-b5ba-05c4f7907436.glb", height: 1.1 },
+  { id: "koalys", url: GLB_BASE + "ee0eb69f-1fd2-44cf-8350-9fe3a66b7de0.glb", height: 1.25 },
+  { id: "eucalypin", url: GLB_BASE + "451bd5e5-0f27-4116-9c2c-fe8dc4e83b2f.glb", height: 1.7 },
+  { id: "ornithos", url: GLB_BASE + "db17b04e-f4e6-4e68-9f03-cbcdf707d078.glb", height: 0.65 },
+  { id: "crocobleu", url: GLB_BASE + "61ed29a3-8361-4092-a0c8-539c0e590aab.glb", height: 0.7 },
+];
 applyStrings();
 resize();
-showMenu();
-$("loading").remove();
+$("loading").textContent = t("loading");
+preloadGlb(GLB_ASSETS).finally(() => {
+  diorama = buildMenuDiorama(menuScene);
+  showMenu();
+  $("loading").remove();
+});
 requestAnimationFrame(frame);

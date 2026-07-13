@@ -8,6 +8,52 @@
 // cheerful adventurous mood. High contrast between game elements and backgrounds, clean
 // readable silhouettes, three-quarter isometric view.
 import * as THREE from "./assets/vendor/three.module.js";
+import { GLTFLoader } from "./assets/vendor/GLTFLoader.js";
+
+// Higgsfield-generated GLB meshes (sam_3_3d). Loaded at boot; the procedural
+// builders below remain as automatic fallback if a mesh cannot be fetched.
+export const GLB = {
+  models: {},
+  rotY: { hero: 0, kangarouge: 0, dingoflam: 0, koalys: 0, eucalypin: 0, ornithos: 0, crocobleu: 0 },
+};
+
+export async function preloadGlb(entries, timeoutMs = 10000) {
+  const loader = new GLTFLoader();
+  await Promise.all(entries.map(async ({ id, url, height }) => {
+    try {
+      const gltf = await Promise.race([
+        loader.loadAsync(url),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), timeoutMs)),
+      ]);
+      const src = gltf.scene;
+      const box = new THREE.Box3().setFromObject(src);
+      const size = new THREE.Vector3(); box.getSize(size);
+      src.scale.setScalar(height / (size.y || 1));
+      box.setFromObject(src);
+      const c = new THREE.Vector3(); box.getCenter(c);
+      src.position.set(src.position.x - c.x, src.position.y - box.min.y, src.position.z - c.z);
+      const inner = new THREE.Group();
+      inner.rotation.y = GLB.rotY[id] || 0;
+      inner.add(src);
+      const wrap = new THREE.Group();
+      wrap.add(inner);
+      wrap.traverse((o) => {
+        if (o.isMesh) {
+          o.castShadow = true;
+          if (o.material) { o.material.side = THREE.DoubleSide; }
+        }
+      });
+      GLB.models[id] = wrap;
+    } catch (e) { /* keep procedural fallback */ }
+  }));
+}
+
+function cloneGlb(id, scale) {
+  const g = GLB.models[id].clone(true);
+  g.scale.setScalar(scale);
+  g.userData.baseScale = scale;
+  return g;
+}
 
 export const PAL = {
   ochre: 0xc98a4b, sand: 0xe8c28a, sandLight: 0xf0d9ae,
@@ -153,6 +199,7 @@ function crocobleu() {
 const BUILDERS = { kangarouge, dingoflam, koalys, eucalypin, ornithos, crocobleu };
 
 export function buildCreature(speciesId, scale = 1) {
+  if (GLB.models[speciesId]) return cloneGlb(speciesId, scale);
   const g = BUILDERS[speciesId]();
   g.scale.setScalar(scale);
   g.userData.baseScale = scale;
@@ -169,6 +216,7 @@ export function buildOrb(r = 0.16) {
 
 // ---- Hero (faces +Z), limbs exposed for the walk cycle ----
 export function buildHero() {
+  if (GLB.models.hero) return cloneGlb("hero", 1);
   const g = new THREE.Group();
   const mk = (geo, c, x, y, z, o) => { const q = m(geo, c, x, y, z, o); g.add(q); return q; };
   mk(G.box, PAL.coral, 0, 0.85, 0, { sx: 0.4, sy: 0.45, sz: 0.26 });                    // shirt

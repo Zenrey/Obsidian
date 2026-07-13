@@ -40,8 +40,11 @@ Débogage : ajouter `?dev=1` à l'URL (FPS, draw calls, hooks de test `window.__
 | `logic.js` | module règles requis par la plateforme de déploiement |
 | `design/assets.csv` | manifeste des assets |
 
-Rendu : Three.js 0.160 (vendorisé dans `assets/vendor/`).
-Assets audio et images de couverture générés avec Higgsfield.
+Rendu : Three.js 0.160 + GLTFLoader (vendorisés dans `assets/vendor/`).
+Créatures et héros : modèles 3D générés avec Higgsfield (`sam_3_3d`, images de concept
+nano banana), chargés depuis le CDN Higgsfield avec repli automatique sur des modèles
+procéduraux si le chargement échoue. Musiques, effets sonores et images de couverture
+générés avec Higgsfield.
 
 ## Déploiement
 
